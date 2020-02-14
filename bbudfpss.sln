@@ -7,6 +7,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbudfpss-CLI", "bbudfpss-CL
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tar-archiver", "tar-archiver\tar-archiver.vcxproj", "{5624E313-A161-43CB-865F-C396AC2810B8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AEEB3C71-0B78-497F-8A4B-4D01ED1654F3}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		COPYING.txt = COPYING.txt
+		README.txt = README.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

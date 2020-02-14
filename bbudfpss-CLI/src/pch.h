@@ -15,4 +15,7 @@
 // Libraries
 #include "tarball.h"
 
+// Windows API
+#include <Windows.h>
+
 #endif

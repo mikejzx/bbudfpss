@@ -19,7 +19,7 @@
 #   include <io.h>
 #   include <Windows.h>
 #   include <Lmcons.h>
-#   define GET_USERNAME Win_get_username()
+#   define GET_USERNAME "bbudfpss" // Win_get_username()
 
     // Get username. Only ASCII supported...
     std::string Win_get_username()
@@ -61,16 +61,16 @@ struct PosixTarHeader
 void LOCALNS::tarball::_init(void* header)
 {
     std::memset(header, 0, sizeof(PosixTarHeader));
-    std::strcpy(TARHEADER->magic, "ustar");
-    std::strcpy(TARHEADER->version, " ");
-    std::sprintf(TARHEADER->mtime, "%011lo", time(NULL));
-    std::sprintf(TARHEADER->mode, "%07o", 0644);
-    char* s = (char*)GET_USERNAME.c_str();
+    strcpy_s(TARHEADER->magic, "ustar");
+    strcpy_s(TARHEADER->version, " ");
+    sprintf_s(TARHEADER->mtime, "%011lo", (unsigned long)time(NULL));
+    sprintf_s(TARHEADER->mode, "%07o", 0644);
+    char* s = (char*)GET_USERNAME;
     if (s != NULL)
     {
 		std::snprintf((char*)header, 32, "%s", s);
     }
-    std::sprintf(TARHEADER->gname, "%s", "users");
+    sprintf_s(TARHEADER->gname, "%s", "users");
 }
 
 void LOCALNS::tarball::_checksum(void* header)
@@ -86,12 +86,12 @@ void LOCALNS::tarball::_checksum(void* header)
 	}
     while (p < q) sum += *p++ & 0xff;
 
-    std::sprintf(TARHEADER->checksum,"%06o",sum);
+    sprintf_s(TARHEADER->checksum,"%06o",sum);
 }
 
 void LOCALNS::tarball::_size(void* header,unsigned long fileSize)
 {
-    std::sprintf(TARHEADER->size,"%011llo",(long long unsigned int)fileSize);
+    sprintf_s(TARHEADER->size,"%011llo",(long long unsigned int)fileSize);
 }
 
 void LOCALNS::tarball::_filename(void* header,const char* filename)
@@ -167,10 +167,10 @@ void LOCALNS::tarball::put(const char* filename,const char* content,std::size_t 
 void LOCALNS::tarball::putFile(const char* filename,const char* nameInArchive)
 {
     char buff[BUFSIZ];
-    std::FILE* in=std::fopen(filename,"rb");
-    if(in==NULL)
+    FILE* in;
+    if (!fopen_s(&in, filename, "rb") == 0)
 	{
-		THROW("Cannot open " << filename << " "<< std::strerror(errno));
+		THROW("Cannot open " << filename);
 	}
     std::fseek(in, 0L, SEEK_END);
     long int len= std::ftell(in);
