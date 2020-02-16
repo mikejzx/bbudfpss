@@ -2,3 +2,4 @@ bin/*
 **/*.vcxproj.filters
 **/*.vcxproj.user
 .vs/*
+*.tar

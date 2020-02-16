@@ -16,44 +16,81 @@
 #include "pch.h"
 #include "archiver.h"
 
+// Usage string text.
+#define SZ_HELP_TEXT R"(bbudfpss
+A simple back up tool for Windows.
+Michael Skec, February 2020
+
+    Command line arguments:
+    -h, --help, /?
+        Show this help dialogue.
+
+    -i, --input, /I
+        Specify input directory to back up.
+
+    -o, --output, /O
+        Specify directory to place the output archive.
+)"
+
+#define CMD_OK 1
+#define CMD_HELP 2
+#define CMD_FAIL -1
+
 // Function prototypes.
 void get_dir_files(std::vector<std::string>&, const std::string&, bool);
+int parse_args(int, char**);
+
+// Global variables
+static char inputDir[4096];
+static char outputDir[4096];
 
 int main(int argc, char* argv[])
 {
+	// Parse arguments.
+	int cmd = parse_args(argc, argv);
+	if (cmd != CMD_OK)
+	{
+		// Invalid parameters were passed.
+		if (cmd == CMD_FAIL)
+		{
+			std::cerr << "Aborting with parameter errors..." << std::endl;
+			return -1;
+		}
+		// Expected early exit.
+		return 0;
+	}
 	std::cout << "bbudfpss v0.1" << std::endl;
-	
-	// Need at least two arguments.
-	if (argc < 2)
+
+	// Make sure input and outputs is a directory.
+	auto test_dir = [](const char* dir)
 	{
-		std::cerr << "Missing parameters. Usage: bbudfpss <input directory> <output directory>" << std::endl;
-		std::cin.get();
-		return -1;
+		DWORD result = GetFileAttributesA(dir);
+		if ((result & FILE_ATTRIBUTE_DIRECTORY) == 0)
+		{
+			std::cerr << "'" << dir << "' is not a directory!" << std::endl;
+			return 0;
+		}
+		if (result == INVALID_FILE_ATTRIBUTES)
+		{
+			std::cerr << "'" << dir << "' is an invalid directory. Make sure it exists." << std::endl;
+			return 0;
+		}
+		return 1;
+	};
+	if (!test_dir(inputDir))  { return -1; }
+	if (!test_dir(outputDir)) { return -1; }
+
+	// Remove trailing slash from output dir.
+	size_t outputSize = strlen(outputDir);
+	char final_char = outputDir[outputSize - 1];
+	if (final_char == '\\' || final_char == '/')
+	{
+		// Just put a null terminator char to shorten at slash.
+		outputDir[outputSize - 1] = 0;
 	}
 
-	// Get absolute paths
-	char inputDir[4096], outputDir[4096];
-	if (!GetFullPathNameA(argv[1], 4096, inputDir, NULL))
-	{
-		std::cerr << "Invalid input file path" << std::endl;
-	}
-	if (!GetFullPathNameA(argv[2], 4096, outputDir, NULL))
-	{
-		std::cerr << "Invalid output file path" << std::endl;
-	}
-
-	// Make sure input is a directory.
-	DWORD result = GetFileAttributesA(inputDir);
-	if ((result & FILE_ATTRIBUTE_DIRECTORY) == 0)
-	{
-		std::cerr << "Input must be a directory." << std::endl;
-		return -1;
-	}
-	if (result == INVALID_FILE_ATTRIBUTES)
-	{
-		std::cerr << "Invalid directory. Make sure it exists." << std::endl;
-		return -1;
-	}
+	std::cout << std::endl << "Backing up '" << inputDir << "'..." << std::endl;
+	std::cout << "Destination: '" << outputDir << "'" << std::endl;
 
 	// Get all the files in the input directory,
 	std::vector<std::string> v;
@@ -81,6 +118,8 @@ int main(int argc, char* argv[])
 	// Compress the archive.
 	//
 
+	std::cout << std::endl << "Compressing archive..." << std::endl;
+
 	// Create input stream from the archive
 	std::ifstream infile(outname, std::ios_base::binary);
 	infile.seekg(0, std::ios_base::end);
@@ -105,6 +144,7 @@ int main(int argc, char* argv[])
 	zstr::ofstream outfile(outname);
 	outfile.write(buff_uncomp, buff_size_uncomp);
 
+	std::cout << "Done." << std::endl;
 	return 0;
 }
 
@@ -154,4 +194,84 @@ void get_dir_files(std::vector<std::string>& out, const std::string& directory, 
 	} while (FindNextFileA(dir, &file_data));
 
 	FindClose(dir);
+}
+
+// Parse command line arguments.
+int parse_args(int argc, char* argv[])
+{
+	// Not enough args.
+	if (argc == 1)
+	{
+		std::cout << "Missing parameters. Pass --help for usage information." << std::endl;
+		return CMD_HELP;
+	}
+
+	// Iterate over arguments
+	while (*(++argv))
+	{
+		// Help menu
+		if (strcmp(*argv, "-h") == 0
+			|| strcmp(*argv, "/?") == 0
+			|| strcmp(*argv, "--help") == 0)
+		{
+			std::cout << SZ_HELP_TEXT << std::endl;
+			return CMD_HELP;
+		}
+
+		// Input file.
+		if (strcmp(*argv, "-i") == 0
+			|| strcmp(*argv, "/I") == 0
+			|| strcmp(*argv, "--input") == 0)
+		{
+			// Make sure next parameter exists
+			if (!*(++argv))
+			{
+				std::cerr << "Missing input directory parameter." << std::endl;
+				return CMD_FAIL;
+			}
+
+			// Get absolute path
+			if (!GetFullPathNameA(*argv, 4096, inputDir, NULL))
+			{
+				std::cerr << "Invalid input file path" << std::endl;
+				return CMD_FAIL;
+			}
+
+			continue;
+		}
+
+		// Input file.
+		if (strcmp(*argv, "-o") == 0
+			|| strcmp(*argv, "/O") == 0
+			|| strcmp(*argv, "--output") == 0)
+		{
+			// Make sure next parameter exists.
+			if (!*(++argv))
+			{
+				std::cerr << "Missing output directory parameter." << std::endl;
+				return CMD_FAIL;
+			}
+
+			// Get absolute path
+			if (!GetFullPathNameA(*argv, 4096, outputDir, NULL))
+			{
+				std::cerr << "Invalid output file path" << std::endl;
+				return CMD_FAIL;
+			}
+
+			continue;
+		}
+	}
+
+	// Make sure paths were passed.
+	if (!inputDir)
+	{
+		std::cerr << "No input directory specified." << std::endl;
+	}
+	if (!outputDir)
+	{
+		std::cerr << "No output directory specified." << std::endl;
+	}
+
+	return CMD_OK;
 }

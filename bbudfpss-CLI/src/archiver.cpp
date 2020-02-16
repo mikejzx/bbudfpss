@@ -19,11 +19,12 @@ void write_archive(const char* outname, const std::vector<std::string>& filename
 	size_t fc = filenames.size();
 	size_t inl = strlen(indir);
 	unsigned i;
+	entry = archive_entry_new();
 	for (i = 0; i < fc; ++i)
 	{
 		const char* fn = filenames[i].c_str();
 		stat(fn, &st);
-		entry = archive_entry_new();
+		archive_entry_clear(entry);
 
 		const char* rname = std::string_view(fn + inl + 1, strlen(fn) - inl - 1).data();
 
@@ -46,8 +47,8 @@ void write_archive(const char* outname, const std::vector<std::string>& filename
 			len = fread(buff, sizeof(char), sizeof buff, fd);
 		}
 		fclose(fd);
-		archive_entry_free(entry);
 	}
+	archive_entry_free(entry);
 	archive_write_close(a);
 	archive_write_free(a);
 
