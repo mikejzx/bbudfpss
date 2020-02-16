@@ -16,6 +16,9 @@
 // Libraries
 #include <archive.h>
 #include <archive_entry.h>
+#include <zlib.h>
+#include "gzip/zstr.hpp"
+#include "gzip/strict_fstream.hpp"
 
 // Windows API
 #include <Windows.h>

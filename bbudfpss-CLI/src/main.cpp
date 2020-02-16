@@ -77,6 +77,34 @@ int main(int argc, char* argv[])
 	strcat_s(outname, ".tar");
 	write_archive(outname, v, inputDir);
 
+	//
+	// Compress the archive.
+	//
+
+	// Create input stream from the archive
+	std::ifstream infile(outname, std::ios_base::binary);
+	infile.seekg(0, std::ios_base::end);
+	size_t len = infile.tellg();
+	infile.seekg(0, std::ios_base::beg);
+
+	// Read bytes
+	std::vector<char> buffer;
+	buffer.reserve(len);
+	std::copy(std::istreambuf_iterator<char>(infile),
+		std::istreambuf_iterator<char>(),
+		std::back_inserter(buffer));
+	infile.close();
+
+	// Replace uncompressed archive with the compressed one.
+	std::remove(outname);
+	strcat_s(outname, ".gz");
+
+	const char* buff_uncomp = buffer.data();
+	size_t buff_size_uncomp = buffer.size() * sizeof(char);
+
+	zstr::ofstream outfile(outname);
+	outfile.write(buff_uncomp, buff_size_uncomp);
+
 	return 0;
 }
 
