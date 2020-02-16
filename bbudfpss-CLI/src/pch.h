@@ -6,6 +6,7 @@
 */
 
 // Standard includes.
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -13,7 +14,8 @@
 #include <vector>
 
 // Libraries
-#include "tarball.h"
+#include <archive.h>
+#include <archive_entry.h>
 
 // Windows API
 #include <Windows.h>

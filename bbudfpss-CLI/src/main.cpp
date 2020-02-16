@@ -14,6 +14,7 @@
 
 // Include pre-compiled header.
 #include "pch.h"
+#include "archiver.h"
 
 // Function prototypes.
 void get_dir_files(std::vector<std::string>&, const std::string&, bool);
@@ -57,29 +58,24 @@ int main(int argc, char* argv[])
 	// Get all the files in the input directory,
 	std::vector<std::string> v;
 	get_dir_files(v, inputDir, true);
+	
+	// Get a timestamp string in format:
+	// DDMMYY_HH-MM-SS
+	char datestamp[6];
+	char timestamp[6];
+	SYSTEMTIME systime;
+	GetLocalTime(&systime);
+	GetDateFormatA(LOCALE_USER_DEFAULT, NULL, &systime, "ddMMyy", datestamp, 6);
+	GetTimeFormatA(LOCALE_USER_DEFAULT, NULL, &systime, "'_'HH'-'mm", timestamp, 7);
 
-	// Create and put to a tarball.
-	std::fstream out(std::string(outputDir).append("\\OUTPUT_TARBALL.tar").c_str(), std::ios::out);
-	if (!out.is_open())
-	{
-		std::cerr << "Cannot open output file. Aborting..." << std::endl;
-		std::cin.get();
-		return -1;
-	}
-	tar::tarball archive(out);
-	/*unsigned input_len = strlen(inputDir);
-	for (unsigned i = 0; i < v.size(); ++i)
-	{
-		std::string_view relative_name(v[i].c_str() + input_len + 1, v[i].length() - input_len - 1);
-		archive.putFile(v[i].c_str(), relative_name.data());
-		//std::cout << v[i].c_str() << " as " << relative_name.data() << std::endl << std::endl;
-	}*/
-	archive.put("myfiles/item1.txt", "Hello World 1\n");
-	archive.put("item2.txt", "Hello WorLd 1\n");
-	archive.put("item3.txt", "Hello WORld 1\n");
-	archive.put("item4.txt", "Hello world 1\n");
-	archive.finish();
-	out.close();
+	// Write to archive.
+	char outname[MAX_PATH];
+	strcpy_s(outname, outputDir);
+	strcat_s(outname, "\\Backup_");
+	strcat_s(outname, datestamp);
+	strcat_s(outname, timestamp);
+	strcat_s(outname, ".tar");
+	write_archive(outname, v, inputDir);
 
 	return 0;
 }
@@ -114,7 +110,7 @@ void get_dir_files(std::vector<std::string>& out, const std::string& directory, 
 		{
 			// Run it recursively into each directory too.
 			// First we check that the directory isn't '.' or '..'
-			unsigned filename_len = filename.length();
+			size_t filename_len = filename.length();
 			if (filename[0] == '.' && (filename_len == 1
 				|| (filename_len == 2 && filename[1] == '.')))
 			{
