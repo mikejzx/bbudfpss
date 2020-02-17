@@ -54,9 +54,11 @@ int main(int argc, char* argv[])
 		if (cmd == CMD_FAIL)
 		{
 			std::cerr << "Aborting with parameter errors..." << std::endl;
+			std::cin.get();
 			return -1;
 		}
 		// Expected early exit.
+		std::cin.get();
 		return 0;
 	}
 	std::cout << "bbudfpss v0.1" << std::endl;
@@ -68,17 +70,27 @@ int main(int argc, char* argv[])
 		if ((result & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		{
 			std::cerr << "'" << dir << "' is not a directory!" << std::endl;
+			std::cin.get();
 			return 0;
 		}
 		if (result == INVALID_FILE_ATTRIBUTES)
 		{
 			std::cerr << "'" << dir << "' is an invalid directory. Make sure it exists." << std::endl;
+			std::cin.get();
 			return 0;
 		}
 		return 1;
 	};
-	if (!test_dir(inputDir))  { return -1; }
-	if (!test_dir(outputDir)) { return -1; }
+	if (!test_dir(inputDir))  
+	{ 
+		std::cin.get();
+		return -1; 
+	}
+	if (!test_dir(outputDir)) 
+	{ 
+		std::cin.get();
+		return -1; 
+	}
 
 	// Remove trailing slash from output dir.
 	size_t outputSize = strlen(outputDir);
